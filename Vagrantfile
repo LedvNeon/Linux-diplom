@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
 
   config.vm.define "ansibledmz" do |ansibledmz|
     ansibledmz.vm.provider :virtualbox # укажем поставщика виртуализации
-    ansibledmz.vm.hostname = "rouansibledmzter" # укажем имя VM (конкретно для данной VM)
+    ansibledmz.vm.hostname = "ansibledmz" # укажем имя VM (конкретно для данной VM)
     ansibledmz.vm.network "private_network", ip: "10.200.1.2", virtualbox__intnet: "dmz_net" # укажем тип подсети и зададим ip (конкретно для данной VM)
     ansibledmz.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
     ansibledmz.vm.provision "shell", path: "ansible.sh" # запустим скрипт с локально ОС
