@@ -1,14 +1,27 @@
 #!/bin/bash
-sudo yum update -y #обновим ОС
-sudo yum -y install epel-release #добавим репозиторий epel-release
-sudo yum -y install ansible #установим ansible
+yum update -y #обновим ОС
+yum -y install epel-release #добавим репозиторий epel-release
+yum install -y python3
+yum -y install ansible #установим ansible
 #создадим inventory-файл
 cat <<EOF> /etc/ansible/hosts
 [web]
-10.200.1.3
+webdmz ansible_host=10.200.1.3
+[web:vars}
+ansible_user=vagrant
+EOF
+# изменим права (так делаем только в рамка хтестовой среды)
+chmod 777 /etc
+chmod 777 /etc/ansible
+# создадим дирректорию для playbooks
+sudo mkdir /etc/ansible/playbooks
+chmod 777 /etc/ansible/playbooks
+cat <<EOF> /etc/ansible/ansible.cfg
+[defaults]
+host_key_checking = False
 EOF
 #обавим шлюз по-умолчанию
 route add default gw 10.200.1.1
 #выключим лишние интерфейсы
-ifconfig eth0 down
-ifconfig eth2 down
+#ifconfig eth0 down
+#ifconfig eth2 down
