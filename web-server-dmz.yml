@@ -1,5 +1,5 @@
 ---
-# В play1 установка docker производится через модуль ansible-shell
+# В play 1 установка docker производится через модуль ansible-shell
 
 - name: install docker # название первого play
   hosts: web # группа хостов, над которой будем выполнять изменения
@@ -22,3 +22,16 @@
     tags: run_docker_webdmz
 
   tags: install_docker_webdmz_play
+
+# Последний play
+- name: network for webdmz
+  hosts: web
+  become: true
+
+  tasks:
+  - name: network settings for webdmz
+    ansible.builtin.shell: |
+      route add default gw 10.200.1.1 && # добавим шлюз по умолчанию
+      ifconfig eth0 down # выключим ненужный интерфейс
+    tags: route_webdmz
+  tags: network_webdmz
