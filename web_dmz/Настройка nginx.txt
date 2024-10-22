@@ -1,0 +1,261 @@
+инструкция для nginx - https://www.8host.com/blog/nastrojka-virtualnyx-xostov-nginx-v-centos-7/
+инструкция для fastcgi - https://firstvds.ru/technology/ustanovka-i-nastroyka-nginx 
++ https://blog.programs74.ru/how-to-install-php-82-nginx-on-ubuntu-2204/
+
+УСТАНОВИТЬ install php-pgsql
+
+1. Создаём директорию /var/www/html (появляется после установки nginx) - даём 777 + /var/www/ - тоже 777
+[root@webdmz vagrant]# chmod 777 /var/www/html/
+[root@webdmz vagrant]# chmod 777 /var/www/
+[root@webdmz vagrant]# chmod 777 /var/
+
+2. Создаём файл /var/www/html/index.html с содержимым
+<!DOCTYPE html>
+<html>
+<head>
+.<title>Заголовок</title>
+</head>
+<body>
+."Hello World!"
+</body>
+</html>
+
+3. Создаём директорию /etc/nginx/sites/
+
+4. Создаём файл /etc/nginx/sites/example.conf - 777
+
+server {
+listen  8080;
+location / {
+root  /var/www/html;
+index  index.html index.htm index.php;
+}
+location ~* \.(gif|jpg|png)$ {
+expires 30d;
+}
+error_page  500 502 503 504  /50x.html;
+location = /50x.html {
+root  /usr/share/nginx/html;
+}
+location ~ \.php$ {
+fastcgi_pass  unix:/run/php-fpm/www.sock;
+fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+include fastcgi_params;
+}
+}
+
+РАБОЧИЙ КОНФИГ С SSL ВОТ:
+server {
+        listen  8080;
+        location / {
+                root  /var/www/html;
+                index  index.html index.htm index.php;
+        }
+        location ~* \.(gif|jpg|png)$ {
+                expires 30d;
+        }
+        error_page  500 502 503 504  /50x.html;
+        location = /50x.html {
+                root  /usr/share/nginx/html;
+        }
+        location ~ \.php$ {
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_param SCRIPT_FILENAME /var/www/html/index.php;
+                include fastcgi_params;
+        }
+server {
+        listen  443 ssl;
+		ssl_certificate /home/vagrant/org.crt;
+        ssl_certificate_key /home/vagrant/rootCA.key;
+        location / {
+                root  /var/www/html;
+                index  index.html index.htm index.php;
+        }
+        location ~* \.(gif|jpg|png)$ {
+                expires 30d;
+        }
+        error_page  500 502 503 504  /50x.html;
+        location = /50x.html {
+                root  /usr/share/nginx/html;
+        }
+        location ~ \.php$ {
+                fastcgi_pass 127.0.0.1:9000;
+                fastcgi_param SCRIPT_FILENAME /var/www/html/index.php;
+                include fastcgi_params;
+        }
+}
+
+5. тестируем nginx -t (отредактированный файл конфига /etc/nginx/nginx.conf)
+
+6. systemctl restart nginx 
+
+--------------------------------------------------------------------------------
+
+# For more information on configuration, see:
+#   * Official English Documentation: http://nginx.org/en/docs/
+#   * Official Russian Documentation: http://nginx.org/ru/docs/
+
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log;
+pid /run/nginx.pid;
+
+# Load dynamic modules. See /usr/share/doc/nginx/README.dynamic.
+include /usr/share/nginx/modules/*.conf;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    access_log  /var/log/nginx/access.log  main;
+
+    sendfile            on;
+    tcp_nopush          on;
+    tcp_nodelay         on;
+    keepalive_timeout   65;
+    types_hash_max_size 4096;
+
+    include             /etc/nginx/mime.types;
+    default_type        application/octet-stream;
+
+    # Load modular configuration files from the /etc/nginx/conf.d directory.
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    # for more information.
+    #include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites/*.conf;
+
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        # Load configuration files for the default server block.
+        #include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+    }
+
+# Settings for a TLS enabled server.
+#
+#    server {
+#        listen       443 ssl http2;
+#        listen       [::]:443 ssl http2;
+#        server_name  _;
+#        root         /usr/share/nginx/html;
+#
+#        ssl_certificate "/etc/pki/nginx/server.crt";
+#        ssl_certificate_key "/etc/pki/nginx/private/server.key";
+#        ssl_session_cache shared:SSL:1m;
+#        ssl_session_timeout  10m;
+#        ssl_ciphers PROFILE=SYSTEM;
+#        ssl_prefer_server_ciphers on;
+#
+#        # Load configuration files for the default server block.
+#        include /etc/nginx/default.d/*.conf;
+#
+#        error_page 404 /404.html;
+#            location = /40x.html {
+#        }
+#
+#        error_page 500 502 503 504 /50x.html;
+#            location = /50x.html {
+#        }
+#    }
+
+}
+
+----------------------------------------------------------------------
+
+7. cat /var/www/html/index.php  (должен быть так заполнен) - 777 права и echo "<?php echo phpinfo(); ?>" > /var/www/html/info.php (тут права не давал)
+<?php
+phpinfo();
+?>
+
+8. ps -ef |grep "[p]hp-fpm: pool" - везде владелец nginx - пул www
+[root@webdmz vagrant]# ps -ef |grep "[p]hp-fpm: pool"
+nginx       2510    2508  0 19:37 ?        00:00:00 php-fpm: pool www
+nginx       2511    2508  0 19:37 ?        00:00:00 php-fpm: pool www
+nginx       2512    2508  0 19:37 ?        00:00:00 php-fpm: pool www
+nginx       2513    2508  0 19:37 ?        00:00:00 php-fpm: pool www
+nginx       2514    2508  0 19:37 ?        00:00:00 php-fpm: pool www
+
+9. [root@webdmz vagrant]# cat /etc/php-fpm.d/www.conf | egrep -Ev "^\s*(;|#|$)"
+[www]
+user = nginx
+group = nginx 
+;listen = /run/php-fpm/www.sock ВАЖНАЯ САМАЯ СТРОКА!!!!! ; - так комментируем
+listen = 127.0.0.1:9000
+listen.acl_users = apache,nginx
+listen.allowed_clients = 127.0.0.1
+pm = dynamic
+pm.max_children = 50
+pm.start_servers = 5
+pm.min_spare_servers = 5
+pm.max_spare_servers = 35
+slowlog = /var/log/php-fpm/www-slow.log
+php_admin_value[error_log] = /var/log/php-fpm/www-error.log
+php_admin_flag[log_errors] = on
+php_value[session.save_handler] = files
+php_value[session.save_path]    = /var/lib/php/session
+php_value[soap.wsdl_cache_dir]  = /var/lib/php/wsdlcache
+
+10. systemctl restart nginx, systemctl restart php-fpm 
+
+11. curl http://localhost:8080 - отдаст содержимое /var/www/html/index.html
+    curl http://localhost:8080/info.php и url http://loclahost:8080/index.php отдадут настройки php
+	
+12. systemctl enable nginx, systemctl enable php-fpm
+
+13. yum install -y postgresql postgresql-server
+    postgresql-setup --initdb
+	systemctl start postgresql.service
+	systemctl enable postgresql.service
+	sudo -u postgres psql 
+	ALTER ROLE postgres WITH PASSWORD 'super_str0ng_pa$$word';
+	create user tuser with password 'super_str0ng_pa$$word';
+	create database test_db;
+	GRANT ALL PRIVILEGES ON *.* TO tuser WITH GRANT OPTION; или GRANT ALL PRIVILEGES ON DATABASE test_db TO tuser WITH GRANT OPTION;
+	exit
+	vi /var/lib/pgsql/data/pg_hba.conf
+	host    all             tuser             all                   md5 - обавить в начало файла
+	service postgresql restart
+	create table test_tb(id TEXT, name TEXT);
+	insert into test_tb(id, name) values (1, 'DIMA'), (2, 'TUSER'), (3, 'OTUS');
+	
+<?php
+  $dbh = new PDO('psql:host=localhost port=5432 user=tuser dbname=test_db password=super_str0ng_pa$$word');
+  $test = $dbh->prepare('SELECT * FROM test_tb;');
+  $test->execute();
+  echo "<pre>";
+  print_r($test->fetchALL(PDO::FETCH_ASSOC));
+  echo "</pre>";
+?>
+
+ВЕРНЫЙ ФАЙЛ /var/www/html/index.php
+<?php
+$db = pg_connect('host=127.0.0.1 port=5432 dbname=test_db user=tuser password=super_str0ng_pa$$word');
+$result = pg_query($db, "select * from test_tb");
+$resultArr = pg_fetch_all($result);
+print_r($resultArr);
+?>
+
+на роутере:
+systemctl start firewalld
+systemctl enable firewalld
+firewall-cmd --permanent --zone=public --add-rich-rule='rule family=ipv4 source address=192.168.0.0/24 forward-port port=8000 protocol=tcp to-port=8080 to-addr=10.200.1.3'
+firewall-cmd --reload
+firewall-cmd --permanent --zone=public --add-rich-rule='rule family=ipv4 source address=192.168.0.0/24 forward-port port=1443 protocol=tcp to-port=443 to-addr=10.200.1.3'
+
+выпуск сертификата ssl - https://www.altlinux.org/%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5_%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%BD%D1%8B%D1%85_%D1%81%D0%B5%D1%80%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%82%D0%BE%D0%B2
