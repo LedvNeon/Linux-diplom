@@ -1,0 +1,37 @@
+---
+# В play 1 установка docker производится через модуль ansible-shell
+
+- name: install docker # название первого play
+  hosts: web # группа хостов, над которой будем выполнять изменения
+  become: true # выполнять команды от суперпользователя
+
+  tasks: # описываем запросы первого play
+  - name: install docker # зададим имя
+    ansible.builtin.shell: |
+      yum install -y yum-utils &&
+      yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &&
+      yum install -y --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    tags: install_docker
+    # --allowerasing - заменить пакеты, если уже установлены
+
+  - name: enable docker
+    ansible.builtin.systemd_service: # модуль запуска
+      name: docker.service
+      state: started # запустить
+      enabled: true # добавить в автозапуск
+    tags: run_docker_webdmz
+
+  tags: install_docker_webdmz_play
+
+# Последний play
+- name: network for webdmz
+  hosts: web
+  become: true
+
+  tasks:
+  - name: network settings for webdmz
+    ansible.builtin.shell: |
+      route add default gw 10.200.1.1 && # добавим шлюз по умолчанию
+      ifconfig eth0 down # выключим ненужный интерфейс
+    tags: route_webdmz
+  tags: network_webdmz
