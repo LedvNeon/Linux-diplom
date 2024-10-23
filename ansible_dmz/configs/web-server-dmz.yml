@@ -23,7 +23,97 @@
 
   tags: install_docker_webdmz_play
 
-# Последний play
+# В play2 мы настроим  fastcgi (nginx - php-fpm - postgresql) на webdmz
+- name: settings fastcgi
+  hosts: web
+  become: true
+
+#Удаляем конфиги, которые дальше будут заменены на новые
+  tasks:
+  - name: delete configs
+    ansible.builtin.shell: |
+      rm -rf /etc/nginx/nginx.conf &&
+      rm -rf /etc/php-fpm.d/www.conf &&
+      rm -rf /var/lib/pgsql/data/pg_hba.conf
+    tags: delete_configs
+
+# Добавляем новый конфиг nginx.conf
+  - name: add new nginx.conf
+    ansible.builtin.copy:
+      src: /etc/ansible/files/etc_nginx_nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: nginx
+      group: nginx
+      mode: '0777'
+    tags: new_nginx_conf
+
+# Добавляем новый конфиг www.conf
+  - name: add new www.conf
+    ansible.builtin.copy:
+      src: /etc/ansible/files/etc_php-fpm.d_www.conf
+      dest: /etc/php-fpm.d/www.conf
+      owner: root
+      group: root
+      mode: '0777'
+    tags: new_www_conf
+
+# Добавляем новый конфиг pg_hba.conf
+  - name: copy pg_hba
+    ansible.builtin.copy:
+      src: /etc/ansible/files/pg_hba.conf
+      dest: /var/lib/pgsql/data/pg_hba.conf
+      owner: postgres
+      group: postgres
+      mode: '0600'
+    tags: copy_pg_hba
+
+# Добавляем конфиг example.conf
+  - name: copy example.conf
+    ansible.builtin.copy:
+      src: /etc/ansible/files/etc_nginx_sites_example.conf
+      dest: /etc/nginx/sites/example.conf
+      owner: nginx
+      group: nginx
+      mode: '0777'
+    tags: conf_nginx
+
+# Создаём БД, пользователя, таблицу (наполняем её данными), даём права пользователю и указываем search_path
+  - name: Create a new database with name "test_db"
+    ansible.builtin.shell: |
+      sudo -u postgres psql -c "ALTER ROLE postgres WITH PASSWORD 'super_str0ng_pa$$word'" &&
+      sudo -u postgres psql -c "CREATE USER tuser WITH PASSWORD 'PassW0rdStr0ng'" &&
+      sudo -u postgres psql -c "create database test_db;" &&
+      sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO tuser WITH GRANT OPTION;" &&
+      sudo -u postgres psql --dbname=test_db -c "create table test_tb(id TEXT, name TEXT);" &&
+      sudo -u postgres psql --dbname=test_db -c "insert into test_tb(id, name) values (1, 'DIMA'), (2, 'TUSER'), (3, 'OTUS');" &&
+      sudo -u postgres psql --dbname=test_db -c "GRANT ALL PRIVILEGES ON test_tb TO tuser;" &&
+      sudo -u postgres psql --dbname=test_db -c "ALTER ROLE tuser SET search_path = public;"
+    tags: new_db
+
+# Рестарт БД
+  - name: restart db
+    ansible.builtin.service:
+      name: postgresql
+      state: restarted
+    tags: restart_db
+
+# Рестарт php-fpm
+  - name: start php-fpm
+    ansible.builtin.service:
+      name: php-fpm
+      state: started
+      enabled: yes
+    tags: start_php_fpm
+
+  - name: restart nginx
+    ansible.builtin.service:
+      name: nginx
+      state: restarted
+    tags: restart_nginx
+
+  tags: settings_fastcgi
+
+# Последний play по настройке сетивых карт и шлюза по-умолчанию
 - name: network for webdmz
   hosts: web
   become: true
