@@ -63,6 +63,7 @@ server {
                 fastcgi_param SCRIPT_FILENAME /var/www/html/index.php;
                 include fastcgi_params;
         }
+}
 server {
         listen  443 ssl;
 		ssl_certificate /home/vagrant/org.crt;
