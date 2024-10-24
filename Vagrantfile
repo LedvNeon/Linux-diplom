@@ -73,7 +73,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     router.vm.network "public_network", ip: "192.168.0.10" # второй адаптер для доступа в интернет (через мою домашнюю сеть)
     router.vm.provision "shell", path: "router/scripts/router.sh" # запустим скрипт с локально ОС
     router.vm.provision "file", source: "router/files/dmz_router_frr.conf", destination: "/etc/frr/frr.conf" #проброс файла конфига для OSPF с локальной ОС
-    router.vm.provision "shell", path: "router/scripts/firewalld.sh"
+    router.vm.provision "shell", path: "router/scripts/firewalld.sh" #выполним скрипт настройки firewalld
+    router.vm.provision "shell", inline: "systemctl restart frr" # рестарт frr
 	router.vm.provision "shell", inline: $script #выполним скрипт
   end
 
