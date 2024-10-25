@@ -28,9 +28,6 @@ EOF
 
 #обавим шлюз по-умолчанию
 route add default gw 10.200.1.1
-#выключим лишние интерфейсы
-#ifconfig eth0 down
-#ifconfig eth2 down
 
 mkdir /etc/ansible/files
 chmod 777 /etc/ansible/files

@@ -23,6 +23,11 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     webdmz2.vm.provision "shell", inline: "chmod 777 /var/www/html/index.php"
     webdmz2.vm.provision "file", source: "web_dmz/files/index.html.txt", destination: "/var/www/html/index.html"
     webdmz2.vm.provision "shell", inline: "chmod 777 /var/www/html/index.html"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd/system"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc"
+    webdmz2.vm.provision "file", source: "web_dmz/files/nginx-exporter.service", destination: "/etc/systemd/system/nginx-exporter.service"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd/system/nginx-exporter.service"
     webdmz2.vm.provision "file", source: "web_dmz/files/rootCA.key", destination: "/etc/nginx/sites/rootCA.key"
     webdmz2.vm.provision "file", source: "web_dmz/files/rootCA.pem", destination: "/etc/nginx/sites/rootCA.pem"
     webdmz2.vm.provision "file", source: "web_dmz/files/rootCA.srl", destination: "/etc/nginx/sites/rootCA.srl"
@@ -45,13 +50,16 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/web-server-dmz.yml", destination: "/etc/ansible/playbooks/web-server-dmz.yml" # копируем playbook для натсройки wbdmz
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/web-server-dmz.yml" # назначим права на playbook
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_nginx.conf.txt", destination: "/etc/ansible/files/etc_nginx_nginx.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/status.conf.txt", destination: "/etc/ansible/files/status.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_sites_example.conf.txt", destination: "/etc/ansible/files/etc_nginx_sites_example.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_php-fpm.d_www.conf.txt", destination: "/etc/ansible/files/etc_php-fpm.d_www.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/var_www_html_index.html.txt", destination: "/etc/ansible/files/var_www_html_index.html"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.conf.txt", destination: "/etc/ansible/files/pg_hba.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
     # выполним playbook игнорируя тег network_webdmz
     ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_webdmz_play, network_webdmz'"
+    ansibledmz2.vm.provision "shell", inline: "ifconfig eth0 as down"
   end
 
   config.vm.define "router" do |router| # define - описание одной vm
@@ -76,6 +84,18 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     router.vm.provision "shell", path: "router/scripts/firewalld.sh" #выполним скрипт настройки firewalld
     router.vm.provision "shell", inline: "systemctl restart frr" # рестарт frr
 	router.vm.provision "shell", inline: $script #выполним скрипт
+  end
+
+  config.vm.define "monitoring" do |monitoring|
+    monitoring.vm.provider :virtualbox
+    monitoring.vm.hostname = "monitoring"
+    monitoring.vm.network "private_network", ip: "172.16.1.5", virtualbox__intnet: "servers_net"
+    monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
+    monitoring.vm.provision "shell", inline: "yum update -y"
+    monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring"
+    monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/prometheus.yml"
+    monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/docker-compose.yml"
+    monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
   end
 
 end

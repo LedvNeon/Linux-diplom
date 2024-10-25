@@ -77,6 +77,16 @@
       mode: '0777'
     tags: conf_nginx
 
+# Добавляем конфиг example.conf
+  - name: copy status.conf
+    ansible.builtin.copy:
+      src: /etc/ansible/files/status.conf
+      dest: /etc/nginx/sites/status.conf
+      owner: nginx
+      group: nginx
+      mode: '0777'
+    tags: conf_status_nginx
+
 # Создаём БД, пользователя, таблицу (наполняем её данными), даём права пользователю и указываем search_path
   - name: Create a new database with name "test_db"
     ansible.builtin.shell: |
@@ -112,6 +122,74 @@
     tags: restart_nginx
 
   tags: settings_fastcgi
+
+# play настройки node-exporter
+
+- name: node exporter
+  hosts: web
+  become: true
+
+  tasks:
+  - name: install node_exporter
+    ansible.builtin.shell: |
+      cd ~/ &&
+      wget https://github.com/prometheus/node_exporter/releases/download/v1.4.0/node_exporter-1.4.0.linux-386.tar.gz &&
+      tar -xvf node_exporter-1.4.0.linux-386.tar.gz &&
+      mv node_exporter-1.4.0.linux-386/node_exporter /usr/local/bin/ &&
+      useradd -rs /bin/false node_exporter
+    tags: install_node_exporter
+
+  - name: config node_exporter
+    ansible.builtin.copy:
+      src: /etc/ansible/files/node_exporter.service
+      dest: /etc/systemd/system/node_exporter.service
+      owner: root
+      group: root
+      mode: '0777'
+    tags: condfig node_exporter
+
+  - name: reload services
+    ansible.builtin.shell: |
+      systemctl daemon-reload &&
+      systemctl start node_exporter &&
+      systemctl enable node_exporter
+    tags: reload_services
+
+  tags: node_exporter
+
+# play настройки nginx-exporter
+- name: nginx exporter
+  hosts: web
+  become: true
+
+  tasks:
+  - name: install nginx_exporter
+    ansible.builtin.shell: |
+      mkdir /opt/nginx-exporter &&
+      cd /opt/nginx-exporter &&
+      useradd --system --no-create-home --shell /bin/false nginx-exporter &&
+      curl -L https://github.com/nginxinc/nginx-prometheus-exporter/releases/download/v0.11.0/nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz -o nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz &&
+      tar -zxf nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz &&
+      rm nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz &&
+      chown -R nginx-exporter:nginx-exporter /opt/nginx-exporter
+    tags: nginx
+
+  - name: config nginx_exprter
+    ansible.builtin.copy:
+      src: /etc/ansible/files/nginx_exporter.service
+      dest: /etc/systemd/system/nginx_exporter.service
+      owner: root
+      group: root
+      mode: '0777'
+    tags: condfig node_exporter
+
+  - name: reload services 2
+    ansible.builtin.shell: |
+      systemctl daemon-reload &&
+      systemctl start nginx_exporter &&
+      systemctl enable nginx_exporter
+    tags: reload_services_2
+  tags: nginx_exporter
 
 # Последний play по настройке сетивых карт и шлюза по-умолчанию
 - name: network for webdmz

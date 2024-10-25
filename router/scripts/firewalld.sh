@@ -16,4 +16,11 @@ firewall-cmd --zone=dmz --add-masquerade --permanent # включим NAT на d
 firewall-cmd --zone=public --add-forward-port=port=8000:proto=tcp:toport=8080:toaddr=10.200.1.4 --permanent
 firewall-cmd --zone=public --add-forward-port=port=2443:proto=tcp:toport=443:toaddr=10.200.1.4 --permanent
 firewall-cmd --zone=public --add-forward-port=port=2222:proto=tcp:toport=22:toaddr=10.200.1.4 --permanent
+firewall-cmd --zone=public --add-forward-port=port=2224:proto=tcp:toport=22:toaddr=172.16.1.5 --permanent
+firewall-cmd --zone=public --add-forward-port=port=9100:proto=tcp:toport=9100:toaddr=10.200.1.4 --permanent
+firewall-cmd --zone=public --add-forward-port=port=3000:proto=tcp:toport=3000:toaddr=172.16.1.5 --permanent
+firewall-cmd --zone=public --add-forward-port=port=9090:proto=tcp:toport=9090:toaddr=172.16.1.5 --permanent
+firewall-cmd --zone=public --add-forward-port=port=9113:proto=tcp:toport=9113:toaddr=10.200.1.4 --permanent
+firewall-cmd --zone=public --add-forward-port=port=8001:proto=tcp:toport=8001:toaddr=10.200.1.4 --permanent
+firewall-cmd --zone=public --add-forward-port=port=2244:proto=tcp:toport=22:toaddr=10.200.1.7 --permanent
 service firewalld restart # рестарт firewalld
