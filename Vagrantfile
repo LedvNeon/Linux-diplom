@@ -55,6 +55,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.network "private_network", ip: "10.200.1.7", virtualbox__intnet: "dmz_net" # укажем тип подсети и зададим ip (конкретно для данной VM)
     #ansibledmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
     ansibledmz2.vm.provision "file", source: ".vagrant/machines/webdmz2/virtualbox/private_key", destination: "/home/vagrant/.ssh/id_rsa_webdmz.pem" # копируем закрытый ключ ssh
+    ansibledmz2.vm.provision "file", source: ".vagrant/machines/monitoring/virtualbox/private_key", destination: "/home/vagrant/.ssh/monitoring.pem"
     ansibledmz2.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/id_rsa_webdmz.pem" # добавим права для ключа
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.8.8 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.4.4 >> /etc/resolv.conf" # пропишем dns
@@ -74,6 +75,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
     # выполним playbook игнорируя тег network_webdmz
     ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
+    ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
     ansibledmz2.vm.provision "shell", inline: "ifconfig eth0 as down"
   end
 
