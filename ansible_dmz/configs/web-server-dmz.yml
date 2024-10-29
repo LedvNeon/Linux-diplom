@@ -77,7 +77,7 @@
       mode: '0777'
     tags: conf_nginx
 
-# Добавляем конфиг example.conf
+# Добавляем конфиг status.conf
   - name: copy status.conf
     ansible.builtin.copy:
       src: /etc/ansible/files/status.conf
@@ -172,7 +172,7 @@
       tar -zxf nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz &&
       rm nginx-prometheus-exporter_0.11.0_linux_amd64.tar.gz &&
       chown -R nginx-exporter:nginx-exporter /opt/nginx-exporter
-    tags: nginx
+    tags: install_nginx_exporter
 
   - name: config nginx_exprter
     ansible.builtin.copy:
@@ -181,7 +181,7 @@
       owner: root
       group: root
       mode: '0777'
-    tags: condfig node_exporter
+    tags: config_nginx_exporter
 
   - name: reload services 2
     ansible.builtin.shell: |
@@ -199,7 +199,7 @@
   tasks:
   - name: network settings for webdmz
     ansible.builtin.shell: |
-      route add default gw 10.200.1.1 && # добавим шлюз по умолчанию
-      ifconfig eth0 down # выключим ненужный интерфейс
+      route add default gw 10.200.1.1 &&
+      ifconfig eth0 down
     tags: route_webdmz
   tags: network_webdmz
