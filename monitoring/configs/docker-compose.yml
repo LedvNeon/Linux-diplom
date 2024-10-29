@@ -5,7 +5,7 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus:/etc/prometheus/
+      - /vagrant/monitoring/configs/prometheus/:/etc/prometheus/
     container_name: prometheus
     hostname: prometheus
     command:
@@ -17,7 +17,7 @@ services:
       TZ: "Europe/Moscow"
     networks:
       - default
-	  
+
   grafana:
     image: grafana/grafana
     user: root

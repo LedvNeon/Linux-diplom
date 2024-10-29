@@ -5,6 +5,30 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
         cp ~vagrant/.ssh/auth* ~root/.ssh # копируем файл с ключами для подключения по ssh
   SHELL
 
+  config.vm.define "router" do |router| # define - описание одной vm
+    
+    # создадим переменную, в рамках которой выполним скрипт bash
+    $script=<<-SCRIPT
+	chown frr:frr /etc/frr/frr.conf
+    chmod 640 /etc/frr/frr.conf
+    chown frr:frr /etc/frr/daemons
+    chmod 640 /etc/frr/daemons
+    systemctl restart frr
+    systemctl enable frr
+    SCRIPT
+
+    router.vm.provider :virtualbox # укажем поставщика виртуализации
+    router.vm.hostname = "router" # укажем имя VM (конкретно для данной VM)
+    router.vm.network "private_network", ip: "10.200.1.1", virtualbox__intnet: "dmz_net" # укажем тип подсети и зададим ip (конкретно для данной VM)
+    router.vm.network "private_network", ip: "172.16.1.1", virtualbox__intnet: "servers_net"
+    router.vm.network "public_network", ip: "192.168.0.10" # второй адаптер для доступа в интернет (через мою домашнюю сеть)
+    router.vm.provision "shell", path: "router/scripts/router.sh" # запустим скрипт с локально ОС
+    router.vm.provision "file", source: "router/files/dmz_router_frr.conf", destination: "/etc/frr/frr.conf" #проброс файла конфига для OSPF с локальной ОС
+    router.vm.provision "shell", path: "router/scripts/firewalld.sh" #выполним скрипт настройки firewalld
+    router.vm.provision "shell", inline: "systemctl restart frr" # рестарт frr
+	router.vm.provision "shell", inline: $script #выполним скрипт
+  end
+
   config.vm.define "webdmz2" do |webdmz2|
     webdmz2.vm.provider :virtualbox # укажем поставщика виртуализации
     webdmz2.vm.hostname = "webdmz2" # укажем имя VM (конкретно для данной VM)
@@ -47,6 +71,11 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/prometheus.yml"
     monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/docker-compose.yml"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
+    monitoring.vm.provision "shell", inline: "mkdir /etc/prometheus"
+    monitoring.vm.provision "shell", inline: "chmod 777 /etc/prometheus"
+    monitoring.vm.provision "shell", inline: "cp /vagrant/monitoring/configs/prometheus.yml /vagrant/monitoring/configs/prometheus/prometheus.yml"
+    monitoring.vm.provision "shell", inline: "yum intsall pip -y"
+    monitoring.vm.provision "shell", inline: "ifconfig eth0 down"
   end
 
   config.vm.define "ansibledmz2" do |ansibledmz2|
@@ -74,34 +103,11 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service", destination: "/etc/ansible/files/nginx_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
+    ansibledmz2.vm.provision "shell", inline: "ifconfig eth0 as down"
     # выполним playbook игнорируя тег network_webdmz
     ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
     ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
-    ansibledmz2.vm.provision "shell", inline: "ifconfig eth0 as down"
-  end
-
-  config.vm.define "router" do |router| # define - описание одной vm
-    
-    # создадим переменную, в рамках которой выполним скрипт bash
-    $script=<<-SCRIPT
-	chown frr:frr /etc/frr/frr.conf
-    chmod 640 /etc/frr/frr.conf
-    chown frr:frr /etc/frr/daemons
-    chmod 640 /etc/frr/daemons
-    systemctl restart frr
-    systemctl enable frr
-    SCRIPT
-
-    router.vm.provider :virtualbox # укажем поставщика виртуализации
-    router.vm.hostname = "router" # укажем имя VM (конкретно для данной VM)
-    router.vm.network "private_network", ip: "10.200.1.1", virtualbox__intnet: "dmz_net" # укажем тип подсети и зададим ip (конкретно для данной VM)
-    router.vm.network "private_network", ip: "172.16.1.1", virtualbox__intnet: "servers_net"
-    router.vm.network "public_network", ip: "192.168.0.10" # второй адаптер для доступа в интернет (через мою домашнюю сеть)
-    router.vm.provision "shell", path: "router/scripts/router.sh" # запустим скрипт с локально ОС
-    router.vm.provision "file", source: "router/files/dmz_router_frr.conf", destination: "/etc/frr/frr.conf" #проброс файла конфига для OSPF с локальной ОС
-    router.vm.provision "shell", path: "router/scripts/firewalld.sh" #выполним скрипт настройки firewalld
-    router.vm.provision "shell", inline: "systemctl restart frr" # рестарт frr
-	router.vm.provision "shell", inline: $script #выполним скрипт
+    #ansibledmz2.vm.provision "shell", inline: "shutdown -h 0"
   end
 
 end

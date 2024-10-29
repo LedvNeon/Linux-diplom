@@ -22,3 +22,22 @@
     tags: run_docker_monitoring
 
   tags: install_docker_monitoring_play
+
+- name: monitoring
+  hosts: monitoring
+  become: true
+
+  tasks:
+  - name: wget docker-compose
+    ansible.builtin.shell: |
+      cd /home/vagrant && wget https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64 &&
+      cp docker-compose-Linux-x86_64 /vagrant/monitoring/configs/
+    tags: wget_docker_compose
+
+  - name: start monitoring soft
+    community.docker.docker_compose_v2:
+      project_src: /vagrant/monitoring/configs/
+      files:
+      - docker-compose.yml
+      state: present
+    tags: start_monitoring_soft
