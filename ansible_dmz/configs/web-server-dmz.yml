@@ -2,7 +2,7 @@
 # В play 1 установка docker производится через модуль ansible-shell
 
 - name: install docker # название первого play
-  hosts: web # группа хостов, над которой будем выполнять изменения
+  hosts: monitoring # группа хостов, над которой будем выполнять изменения
   become: true # выполнять команды от суперпользователя
 
   tasks: # описываем запросы первого play
@@ -19,9 +19,9 @@
       name: docker.service
       state: started # запустить
       enabled: true # добавить в автозапуск
-    tags: run_docker_webdmz
+    tags: run_docker_monitoring
 
-  tags: install_docker_webdmz_play
+  tags: install_docker_monitoring_play
 
 # В play2 мы настроим  fastcgi (nginx - php-fpm - postgresql) на webdmz
 - name: settings fastcgi
