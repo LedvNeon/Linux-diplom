@@ -37,6 +37,18 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     #webdmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
   end
 
+  config.vm.define "monitoring" do |monitoring|
+    monitoring.vm.provider :virtualbox
+    monitoring.vm.hostname = "monitoring"
+    monitoring.vm.network "private_network", ip: "172.16.1.5", virtualbox__intnet: "servers_net"
+    monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
+    monitoring.vm.provision "shell", inline: "yum update -y"
+    monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring"
+    monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/prometheus.yml"
+    monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/docker-compose.yml"
+    monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
+  end
+
   config.vm.define "ansibledmz2" do |ansibledmz2|
     ansibledmz2.vm.provider :virtualbox # укажем поставщика виртуализации
     ansibledmz2.vm.hostname = "ansibledmz2" # укажем имя VM (конкретно для данной VM)
@@ -85,18 +97,6 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     router.vm.provision "shell", path: "router/scripts/firewalld.sh" #выполним скрипт настройки firewalld
     router.vm.provision "shell", inline: "systemctl restart frr" # рестарт frr
 	router.vm.provision "shell", inline: $script #выполним скрипт
-  end
-
-  config.vm.define "monitoring" do |monitoring|
-    monitoring.vm.provider :virtualbox
-    monitoring.vm.hostname = "monitoring"
-    monitoring.vm.network "private_network", ip: "172.16.1.5", virtualbox__intnet: "servers_net"
-    monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
-    monitoring.vm.provision "shell", inline: "yum update -y"
-    monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring"
-    monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/prometheus.yml"
-    monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/docker-compose.yml"
-    monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
   end
 
 end
