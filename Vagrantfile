@@ -62,6 +62,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/web-server-dmz.yml", destination: "/etc/ansible/playbooks/web-server-dmz.yml" # копируем playbook для натсройки wbdmz
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/web-server-dmz.yml" # назначим права на playbook
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_nginx.conf.txt", destination: "/etc/ansible/files/etc_nginx_nginx.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/hosts", destination: "etc/ansible/hosts"
+    ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/hosts"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/status.conf.txt", destination: "/etc/ansible/files/status.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_sites_example.conf.txt", destination: "/etc/ansible/files/etc_nginx_sites_example.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_php-fpm.d_www.conf.txt", destination: "/etc/ansible/files/etc_php-fpm.d_www.conf"
