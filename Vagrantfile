@@ -61,7 +61,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.4.4 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/ansible.sh" # запустим скрипт с локально ОС
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/web-server-dmz.yml", destination: "/etc/ansible/playbooks/web-server-dmz.yml" # копируем playbook для натсройки wbdmz
-    ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/web-server-dmz.yml" # назначим права на playbook
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/monitoring.yml", destination: "/etc/ansible/playbooks/monitoring.yml"
+    ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/*" # назначим права на playbook
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_nginx.conf.txt", destination: "/etc/ansible/files/etc_nginx_nginx.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/hosts", destination: "etc/ansible/hosts"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/hosts"
