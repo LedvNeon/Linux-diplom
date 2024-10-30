@@ -68,14 +68,15 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
     monitoring.vm.provision "shell", inline: "yum update -y"
     monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring"
-    monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/prometheus.yml"
-    monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/docker-compose.yml"
+    monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/configs/prometheus.yml"
+    monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/configs/docker-compose.yml"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
+    monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/configs/*"
     monitoring.vm.provision "shell", inline: "mkdir /etc/prometheus"
     monitoring.vm.provision "shell", inline: "chmod 777 /etc/prometheus"
     monitoring.vm.provision "shell", inline: "cp /vagrant/monitoring/configs/prometheus.yml /vagrant/monitoring/configs/prometheus/prometheus.yml"
     monitoring.vm.provision "shell", inline: "yum intsall pip -y"
-    monitoring.vm.provision "shell", inline: "ifconfig eth0 down"
+    monitoring.vm.provision "shell", inline: "sudo ifconfig eth0 down"
   end
 
   config.vm.define "ansibledmz2" do |ansibledmz2|
@@ -85,7 +86,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     #ansibledmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
     ansibledmz2.vm.provision "file", source: ".vagrant/machines/webdmz2/virtualbox/private_key", destination: "/home/vagrant/.ssh/id_rsa_webdmz.pem" # копируем закрытый ключ ssh
     ansibledmz2.vm.provision "file", source: ".vagrant/machines/monitoring/virtualbox/private_key", destination: "/home/vagrant/.ssh/monitoring.pem"
-    ansibledmz2.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/id_rsa_webdmz.pem" # добавим права для ключа
+    ansibledmz2.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/*" # добавим права для ключа
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.8.8 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.4.4 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/ansible.sh" # запустим скрипт с локально ОС
@@ -93,20 +94,22 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/monitoring.yml", destination: "/etc/ansible/playbooks/monitoring.yml"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/*" # назначим права на playbook
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_nginx.conf.txt", destination: "/etc/ansible/files/etc_nginx_nginx.conf"
-    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/hosts", destination: "etc/ansible/hosts"
-    ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/hosts"
+    #ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/hosts", destination: "/etc/ansible/hosts"
+    #ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/hosts"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/status.conf.txt", destination: "/etc/ansible/files/status.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_sites_example.conf.txt", destination: "/etc/ansible/files/etc_nginx_sites_example.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_php-fpm.d_www.conf.txt", destination: "/etc/ansible/files/etc_php-fpm.d_www.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/var_www_html_index.html.txt", destination: "/etc/ansible/files/var_www_html_index.html"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.conf.txt", destination: "/etc/ansible/files/pg_hba.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
-    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service", destination: "/etc/ansible/files/nginx_exporter.service"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service.txt", destination: "/etc/ansible/files/nginx_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
-    ansibledmz2.vm.provision "shell", inline: "ifconfig eth0 as down"
+    ansibledmz2.vm.provision "shell", inline: "/usr/bin/ansible-galaxy collection install community.docker"
+    ansibledmz2.vm.provision "shell", inline: "sudo route add default gw 10.200.1.1"
+    ansibledmz2.vm.provision "shell", inline: "sudo ifconfig eth0 down"
     # выполним playbook игнорируя тег network_webdmz
-    ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
-    ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
+    #ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
+    #ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
     #ansibledmz2.vm.provision "shell", inline: "shutdown -h 0"
   end
 
