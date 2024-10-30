@@ -41,3 +41,10 @@
       - docker-compose.yml
       state: present
     tags: start_monitoring_soft
+
+  - name: down eth0
+    ansible.builtin.shell: |
+      ifconfig eth0 down
+    tags: monitoring_eth0_down
+
+  tags: monitoring

@@ -2,14 +2,21 @@
 yum update -y #обновим ОС
 yum -y install epel-release #добавим репозиторий epel-release
 yum install -y python3
-yum -y install ansible #установим ansible
-ansible-galaxy collection install community.docker
+yum -y install ansible && /usr/bin/ansible-galaxy collection install community.docker #установим ansible
+
 
 #создадим inventory-файл
 cat <<EOF> /etc/ansible/hosts
+[all]
+webdmz2 ansible_host=10.200.1.4
+monitoring ansible_host=172.16.1.5
 [web]
 webdmz2 ansible_host=10.200.1.4
 [web:vars}
+ansible_user=vagrant
+[monitoring]
+monitoring ansible_host=172.16.1.5
+[monitoring:vars]
 ansible_user=vagrant
 EOF
 
@@ -18,7 +25,7 @@ chmod 777 /etc
 chmod 777 /etc/ansible
 # создадим дирректорию для playbooks
 sudo mkdir /etc/ansible/playbooks
-chmod 777 /etc/ansible/playbooks
+chmod 777 /etc/ansible/*
 
 # Внесём изменения в конфиг для ansible, что бы playbook 
 # не запрашивал подтверждения на доверия хосту при подключении
@@ -28,7 +35,7 @@ host_key_checking = False
 EOF
 
 #обавим шлюз по-умолчанию
-route add default gw 10.200.1.1
+#sudo route add default gw 10.200.1.1
 
 mkdir /etc/ansible/files
 chmod 777 /etc/ansible/files
