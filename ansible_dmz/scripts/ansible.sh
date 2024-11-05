@@ -2,7 +2,8 @@
 yum update -y #обновим ОС
 yum -y install epel-release #добавим репозиторий epel-release
 yum install -y python3
-yum -y install ansible && /usr/bin/ansible-galaxy collection install community.docker #установим ansible
+yum -y install ansible && /usr/bin/ansible-galaxy collection install community.docker --upgrade #установим ansible
+yum install -y rsync rsync-daemon
 
 
 #создадим inventory-файл

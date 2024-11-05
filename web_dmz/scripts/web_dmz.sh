@@ -9,3 +9,4 @@ mkdir /etc/nginx/sites/
 chmod 777 /etc/nginx/sites/
 mkdir /etc/nginx/certs/
 chmod 777 /etc/nginx/certs/
+yum install -y rsync rsync-daemon

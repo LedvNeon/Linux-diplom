@@ -1,0 +1,1 @@
+/usr/bin/rsync -avz --progress --delete -e "ssh -p 22 -i /home/vagrant/.ssh/id_rsa_webdmz.pem -o StrictHostKeyChecking=no" root@10.200.1.4:/home/vagrant/backups/* /home/vagrant/backups/backup_web_$(date "+%Y-%m-%d-%H-%M-%S")

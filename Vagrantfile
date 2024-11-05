@@ -57,7 +57,14 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     webdmz2.vm.provision "file", source: "web_dmz/files/rootCA.srl", destination: "/etc/nginx/sites/rootCA.srl"
     webdmz2.vm.provision "file", source: "web_dmz/files/org.csr", destination: "/etc/nginx/sites/org.csr"
     webdmz2.vm.provision "file", source: "web_dmz/files/org.crt", destination: "/etc/nginx/sites/org.crt"
-    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/nginx/sites/*"
+    webdmz2.vm.provision "file", source: "web_dmz/files/backupDB.sh", destination: "/home/vagrant/backupDB.sh"
+    webdmz2.vm.provision "file", source: "web_dmz/files/backup_configs.sh", destination: "/home/vagrant/backup_configs.sh"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /home/vagrant/backupDB.sh && chmod 777 /home/vagrant/backup_configs.sh"
+    webdmz2.vm.provision "shell", inline: "mkdir /home/vagrant/backups"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /home/vagrant/backups"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/nginx/sites/* && chmod 777 /usr/bin/pg_dump"
+    webdmz2.vm.provision "shell", inline: "sudo su && echo '*/10 * * * * /home/vagrant/backupDB.sh' >> /var/spool/cron/root"
+    webdmz2.vm.provision "shell", inline: "sudo su && echo '*/15 * * * * /home/vagrant/backup_configs.sh' >> /var/spool/cron/root"
     #webdmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
   end
 
@@ -67,7 +74,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.network "private_network", ip: "172.16.1.5", virtualbox__intnet: "servers_net"
     monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
     monitoring.vm.provision "shell", inline: "yum update -y"
-    monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring && mkdir /vagrant/monitoring/configs/prometheus"
+    #monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && chmod 777 /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && mkdir /vagrant/monitoring/configs/prometheus"
     monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/configs/docker-compose.yml"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/configs/*"
@@ -75,7 +82,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.provision "shell", inline: "mkdir /etc/prometheus"
     monitoring.vm.provision "shell", inline: "chmod 777 /etc/prometheus && chmod 777 /vagrant/monitoring/configs/prometheus"
     monitoring.vm.provision "shell", inline: "cp /vagrant/monitoring/configs/prometheus.yml /vagrant/monitoring/configs/prometheus/prometheus.yml"
-    monitoring.vm.provision "shell", inline: "yum intsall pip -y"
+    monitoring.vm.provision "shell", inline: "yum install -y pip"
     monitoring.vm.provision "shell", inline: "sudo ifconfig eth0 down"
   end
 
@@ -104,12 +111,17 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service.txt", destination: "/etc/ansible/files/nginx_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
-    ansibledmz2.vm.provision "shell", inline: "/usr/bin/ansible-galaxy collection install community.docker"
+    ansibledmz2.vm.provision "shell", inline: "/usr/bin/ansible-galaxy collection install community.docker --upgrade"
+    ansibledmz2.vm.provision "shell", inline: "mkdir /home/vagrant/backups/ && mkdir /home/vagrant/backups/db && mkdir /home/vagrant/backups/config"
+    ansibledmz2.vm.provision "shell", inline: "chmod 777 /home/vagrant/backups && chmod 777 /home/vagrant/backups/*"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/backup.sh", destination: "/home/vagrant/backup.sh"
+    ansibledmz2.vm.provision "shell", inline: "chmod 777 /home/vagrant/backup.sh"
+    ansibledmz2.vm.provision "shell", inline: "sudo su && echo '*/17 * * * * /home/vagrant/backup.sh' >> /var/spool/cron/root"
     ansibledmz2.vm.provision "shell", inline: "sudo route add default gw 10.200.1.1"
     ansibledmz2.vm.provision "shell", inline: "sudo ifconfig eth0 down"
     # выполним playbook игнорируя тег network_webdmz
-    #ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
-    #ansibledmz2.vm.provision "shell", inline: "ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
+    ansibledmz2.vm.provision "shell", inline: "/usr/bin/ansible-playbook /etc/ansible/playbooks/web-server-dmz.yml -f 10 --key-file /home/vagrant/.ssh/id_rsa_webdmz.pem --skip-tags 'install_docker_monitoring_play, network_webdmz'"
+    ansibledmz2.vm.provision "shell", inline: "sudo /usr/bin/ansible-playbook /etc/ansible/playbooks/monitoring.yml -f 10 --key-file /home/vagrant/.ssh/monitoring.pem"
     #ansibledmz2.vm.provision "shell", inline: "shutdown -h 0"
   end
 
