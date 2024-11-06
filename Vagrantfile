@@ -73,7 +73,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.hostname = "monitoring"
     monitoring.vm.network "private_network", ip: "172.16.1.5", virtualbox__intnet: "servers_net"
     monitoring.vm.provision "shell", inline: "route add default gw 172.16.1.1"
-    #monitoring.vm.provision "shell", inline: "yum update -y"
+    monitoring.vm.provision "shell", inline: "yum update -y"
     #monitoring.vm.provision "shell", inline: "mkdir /vagrant/monitoring && chmod 777 /vagrant/monitoring && mkdir /vagrant/monitoring/configs && chmod 777 /vagrant/monitoring/configs && mkdir /vagrant/monitoring/configs/prometheus"
     monitoring.vm.provision "file", source: "monitoring/configs/docker-compose.yml", destination: "/vagrant/monitoring/configs/docker-compose.yml"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
