@@ -24,4 +24,6 @@ firewall-cmd --zone=public --add-forward-port=port=9113:proto=tcp:toport=9113:to
 firewall-cmd --zone=public --add-forward-port=port=8001:proto=tcp:toport=8001:toaddr=10.200.1.4 --permanent
 firewall-cmd --zone=public --add-forward-port=port=2244:proto=tcp:toport=22:toaddr=10.200.1.7 --permanent
 firewall-cmd --zone=dmz --add-forward-port=port=1111:proto=tcp:toport=22:toaddr=172.16.1.5 --permanent
+firewall-cmd --zone=dmz --add-forward-port=port=5514:proto=tcp:toport=514:toaddr=172.16.1.5 --permanent
+firewall-cmd --zone=dmz --add-forward-port=port=5514:proto=udp:toport=514:toaddr=172.16.1.5 --permanent
 service firewalld restart # рестарт firewalld
