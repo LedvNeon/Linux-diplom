@@ -10,13 +10,13 @@ yum install -y rsync rsync-daemon
 cat <<EOF> /etc/ansible/hosts
 [all]
 webdmz2 ansible_host=10.200.1.4
-monitoring ansible_host=172.16.1.5
+monitoring ansible_host=10.200.1.1 ansible_port=1111
 [web]
 webdmz2 ansible_host=10.200.1.4
 [web:vars}
 ansible_user=vagrant
 [monitoring]
-monitoring ansible_host=172.16.1.5
+monitoring ansible_host=10.200.1.1 ansible_port=1111
 [monitoring:vars]
 ansible_user=vagrant
 EOF
