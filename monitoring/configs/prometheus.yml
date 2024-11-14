@@ -3,5 +3,5 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
     - targets:
-      - 10.200.1.4:9100
-      - 10.200.1.4:9113
+      - 10.200.1.1:9100
+      - 10.200.1.1:9113
