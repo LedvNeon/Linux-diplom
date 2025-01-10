@@ -16,7 +16,8 @@ services:
     environment:
       TZ: "Europe/Moscow"
     networks:
-      - default
+      mynet:
+        ipv4_address: 172.20.0.40
 
   grafana:
     image: grafana/grafana
@@ -34,4 +35,54 @@ services:
     environment:
       TZ: "Europe/Moscow"
     networks:
-      - default
+      mynet:
+        ipv4_address: 172.20.0.30
+
+  alertmanager-bot:
+    command:
+      - --alertmanager.url=http://172.20.0.20:9093
+      - --log.level=info
+      - --store=bolt
+      - --bolt.path=/data/bot.db
+      - --telegram.admin=428398249
+      - --telegram.token=7459724135:AAHYwzFhUOgZM49TNAYq7g5algmvNeUBqtI
+    image: metalmatze/alertmanager-bot:0.4.3
+    user: root
+    ports:
+      - 8080:8080
+    container_name: alertmanager-bot
+    hostname: alertmanager-bot
+    environment:
+      TZ: "Europe/Moscow"
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    networks:
+      mynet:
+        ipv4_address: 172.20.0.10
+
+  alertmanager:
+    image: prom/alertmanager:v0.21.0
+    user: root
+    ports:
+      - 127.0.0.1:9093:9093
+    volumes:
+      - ./prometheus/:/etc/alertmanager/
+    container_name: alertmanager
+    hostname: alertmanager
+    environment:
+      TZ: "Europe/Moscow"
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/etc/alertmanager/data'
+    networks:
+      mynet:
+        ipv4_address: 172.20.0.20
+
+networks:
+  mynet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

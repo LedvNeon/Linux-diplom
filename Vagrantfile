@@ -79,6 +79,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/*"
     monitoring.vm.provision "shell", inline: "chmod 777 /vagrant/monitoring/configs/*"
     monitoring.vm.provision "file", source: "monitoring/configs/prometheus.yml", destination: "/vagrant/monitoring/configs/prometheus/prometheus.yml"
+    monitoring.vm.provision "file", source: "monitoring/configs/alert.rules", destination: "/vagrant/monitoring/configs/prometheus/alert.rules"
+    monitoring.vm.provision "file", source: "monitoring/configs/config.yml", destination: "/vagrant/monitoring/configs/prometheus/config.yml"
     monitoring.vm.provision "shell", inline: "mkdir /etc/prometheus"
     monitoring.vm.provision "shell", inline: "chmod 777 /etc/prometheus && chmod 777 /vagrant/monitoring/configs/prometheus"
     monitoring.vm.provision "shell", inline: "cp /vagrant/monitoring/configs/prometheus.yml /vagrant/monitoring/configs/prometheus/prometheus.yml"

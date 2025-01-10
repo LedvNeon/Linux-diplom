@@ -5,3 +5,13 @@ scrape_configs:
     - targets:
       - 10.200.1.1:9100
       - 10.200.1.1:9113
+      
+rule_files:
+  - 'alert.rules'
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "172.18.0.2:9093"
