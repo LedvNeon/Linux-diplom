@@ -14,4 +14,4 @@ alerting:
   - scheme: http
     static_configs:
     - targets:
-      - "172.18.0.2:9093"
+      - "172.20.0.20:9093"
