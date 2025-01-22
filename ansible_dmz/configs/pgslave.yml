@@ -1,0 +1,49 @@
+---
+- name: postgresql
+  hosts: pgslave
+  become: true
+
+  tasks:
+  - name: delete configs
+    ansible.builtin.shell: |
+      rm -rf /var/lib/pgsql/data/pg_hba.conf &&
+      rm -rf /var/lib/pgsql/data/postgresql.conf
+    tags: delete_slave_configs
+
+  - name: copy pg_hba
+    ansible.builtin.copy:
+      src: /etc/ansible/files/pg_hba.slave.conf
+      dest: /var/lib/pgsql/data/pg_hba.conf
+      owner: postgres
+      group: postgres
+      mode: '0600'
+    tags: copy_slave_pg_hba
+
+  - name: copy postgresql.conf
+    ansible.builtin.copy:
+      src: /etc/ansible/files/postgresql.slave.conf
+      dest: /var/lib/pgsql/data/postgresql.conf
+      owner: postgres
+      group: postgres
+      mode: '0600'
+    tags: copy_slave_postgresql.conf
+
+  - name: create replication user
+    ansible.builtin.shell: |
+      sudo -u postgres psql --dbname=test_db -c "CREATE USER repuser WITH REPLICATION";
+      sudo -u postgres psql --dbname=test_db -c "ALTER USER repuser WITH PASSWORD 'PassW0rdStr0ng'"";
+      sudo -u postgres psql --dbname=test_db -c "GRANT ALL ON DATABASE test_db TO repuser";
+    tags: rep_user
+
+  - name: restart_db
+    ansible.builtin.service:
+      name: postgresql
+      state: restarted
+    tags: restart_postgres
+
+  - name: rep db
+    ansible.builtin.shell: |
+      pg_basebackup -P -R -X stream -c fast -h 10.200.1.6 -U repuser -D /var/lib/pgsql/data
+    tags: rep_db
+
+  tags: postgresql_settings

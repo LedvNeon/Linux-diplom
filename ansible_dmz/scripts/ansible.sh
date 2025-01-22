@@ -11,6 +11,7 @@ cat <<EOF> /etc/ansible/hosts
 [all]
 webdmz2 ansible_host=10.200.1.4
 monitoring ansible_host=10.200.1.1 ansible_port=1111
+pgslave ansible_host=10.200.1.6
 [web]
 webdmz2 ansible_host=10.200.1.4
 [web:vars}
@@ -18,6 +19,10 @@ ansible_user=vagrant
 [monitoring]
 monitoring ansible_host=10.200.1.1 ansible_port=1111
 [monitoring:vars]
+ansible_user=vagrant
+[pgslave]
+pgslave ansible_host=10.200.1.6
+[pgslave:vars]
 ansible_user=vagrant
 EOF
 

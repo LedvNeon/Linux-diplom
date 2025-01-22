@@ -68,6 +68,20 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     #webdmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
   end
 
+  config.vm.define "pgslave" do |pgslave|
+    pgslave.vm.provider "virtualbox" do |vb|
+      vb.cpus =  "1"
+      vb.memory =  "1024"
+    end
+    pgslave.vm.hostname = "pgslave"
+    pgslave.vm.network "private_network", ip: "10.200.1.6", virtualbox__intnet: "dmz_net"
+    pgslave.vm.provision "shell", inline: "sudo yum -y update"
+    pgslave.vm.provision "shell", inline: "sudo yum -y install epel-release" # установим репозиторий epel
+    pgslave.vm.provision "shell", inline: "sudo yum -y install traceroute tcpdump net-tools php php-fpm postgresql postgresql-server php-pgsql" # установка нужных утилит
+    pgslave.vm.provision "shell", inline: "postgresql-setup --initdb" # инициализация БД
+    pgslave.vm.provision "shell", inline: "sudo route add default gw 10.200.1.1"
+  end
+
   config.vm.define "monitoring" do |monitoring|
     monitoring.vm.provider :virtualbox
     monitoring.vm.hostname = "monitoring"
@@ -95,12 +109,14 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     #ansibledmz2.vm.network "public_network", ip: "192.168.0.5" # второй адаптер для временного доступа в интернет (конкретно эта vm)
     ansibledmz2.vm.provision "file", source: ".vagrant/machines/webdmz2/virtualbox/private_key", destination: "/home/vagrant/.ssh/id_rsa_webdmz.pem" # копируем закрытый ключ ssh
     ansibledmz2.vm.provision "file", source: ".vagrant/machines/monitoring/virtualbox/private_key", destination: "/home/vagrant/.ssh/monitoring.pem"
+    ansibledmz2.vm.provision "file", source: ".vagrant/machines/pgslave/virtualbox/private_key", destination: "/home/vagrant/.ssh/pgslave.pem"
     ansibledmz2.vm.provision "shell", inline: "chmod 600 /home/vagrant/.ssh/*" # добавим права для ключа
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.8.8 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", inline: "echo nameserver 8.8.4.4 >> /etc/resolv.conf" # пропишем dns
     ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/ansible.sh" # запустим скрипт с локально ОС
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/web-server-dmz.yml", destination: "/etc/ansible/playbooks/web-server-dmz.yml" # копируем playbook для натсройки wbdmz
     ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/monitoring.yml", destination: "/etc/ansible/playbooks/monitoring.yml"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/configs/pgslave.yml", destination: "/etc/ansible/playbooks/pgslave.yml"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/playbooks/*" # назначим права на playbook
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_nginx_nginx.conf.txt", destination: "/etc/ansible/files/etc_nginx_nginx.conf"
     #ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/hosts", destination: "/etc/ansible/hosts"
@@ -110,6 +126,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/etc_php-fpm.d_www.conf.txt", destination: "/etc/ansible/files/etc_php-fpm.d_www.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/var_www_html_index.html.txt", destination: "/etc/ansible/files/var_www_html_index.html"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.conf.txt", destination: "/etc/ansible/files/pg_hba.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.slave.conf", destination: "/etc/ansible/files/pg_hba.slave.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/postgresql.slave.conf", destination: "/etc/ansible/files/postgresql.slave.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service.txt", destination: "/etc/ansible/files/nginx_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"
@@ -124,6 +142,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/rsyslog.conf", destination: "/etc/rsyslog.conf"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/rsyslog.conf"
     ansibledmz2.vm.provision "shell", inline: "sudo systemctl restart rsyslog"
+    ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/playbook_pgslave.sh"
     ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/playbook_web.sh"
     ansibledmz2.vm.provision "shell", path: "ansible_dmz/scripts/playbook_monitoring.sh"
     ansibledmz2.vm.provision "shell", inline: "sudo ifconfig eth0 down"
