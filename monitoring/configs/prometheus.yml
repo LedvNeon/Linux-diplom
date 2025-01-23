@@ -3,8 +3,8 @@ scrape_configs:
     scrape_interval: 5s
     static_configs:
     - targets:
-      - 10.200.1.1:9100
-      - 10.200.1.1:9113
+      - 172.16.1.1:9100
+      - 172.16.1.1:9113
       
 rule_files:
   - 'alert.rules'
