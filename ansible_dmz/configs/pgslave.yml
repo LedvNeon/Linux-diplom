@@ -28,22 +28,24 @@
       mode: '0600'
     tags: copy_slave_postgresql.conf
 
-  - name: create replication user
+  - name: replica settings
     ansible.builtin.shell: |
-      sudo -u postgres psql --dbname=test_db -c "CREATE USER repuser WITH REPLICATION";
-      sudo -u postgres psql --dbname=test_db -c "ALTER USER repuser WITH PASSWORD 'PassW0rdStr0ng'"";
-      sudo -u postgres psql --dbname=test_db -c "GRANT ALL ON DATABASE test_db TO repuser";
-    tags: rep_user
+      sudo mkdir ~/pgbackup &&
+      sudo cp /var/lib/pgsql/data/ ~/pgbackup/ &&
+      sudo rm -rf /var/lib/pgsql/data/* &&
+      pg_basebackup -P -R -X stream -c fast -h 10.200.1.4 -U repuser -D /var/lib/pgsql/data/ &&
+      sudo chmod 777 /var/lib/pgsql/data/* &&
+      sudo chmod 777 /var/lib/pgsql/data/*/* &&
+      sudo chmod 777 /var/lib/pgsql/data/*/*/* &&
+      sudo chmod 777 /var/lib/pgsql/data/*/*/*/* &&
+      sudo sed -i 's/10.200.1.4/10.200.1.6/g' /var/lib/pgsql/data/postgresql.conf &&
+      sudo systemctl start postgresql.service
+    tags: replica_settings
 
   - name: restart_db
     ansible.builtin.service:
       name: postgresql
       state: restarted
     tags: restart_postgres
-
-  - name: rep db
-    ansible.builtin.shell: |
-      pg_basebackup -P -R -X stream -c fast -h 10.200.1.6 -U repuser -D /var/lib/pgsql/data
-    tags: rep_db
 
   tags: postgresql_settings

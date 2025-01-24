@@ -2,10 +2,8 @@
 
 # "local" is for Unix domain socket connections only
 host    all             tuser           all                     md5
-host    all             repuser         10.200.1.6/32           trust
-host    all             repuser         127.0.0.1/32            trust
-host    replication    repuser          10.200.1.6/32           trust
-host    replication    repuser          127.0.0.1/32            trust
+host    all             all             all                    trust
+#host    all             all         0.0.0.0/0              trust
 local   all             all                                     peer
 # IPv4 local connections:
 host    all             all             127.0.0.1/32            ident
@@ -13,6 +11,10 @@ host    all             all             127.0.0.1/32            ident
 host    all             all             ::1/128                 ident
 # Allow replication connections from localhost, by a user with the
 # replication privilege.
+host    replication    repuser          10.200.1.6/32           trust
+host    replication    repuser          127.0.0.1/32            trust
 local   replication     all                                     peer
 host    replication     all             127.0.0.1/32            ident
 host    replication     all             ::1/128                 ident
+#host    replication    repuser          10.200.1.6/32           trust
+#host    replication    repuser          127.0.0.0/32            trust
