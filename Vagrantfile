@@ -50,6 +50,8 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd/system"
     webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd"
     webdmz2.vm.provision "shell", inline: "chmod 777 /etc"
+    webdmz2.vm.provision "file", source: "web_dmz/files/all.conf", destination: "/etc/rsyslog.d/all.conf"
+    webdmz2.vm.provision "shell", inline: "chmod 777 /etc/rsyslog.d && chmod 777 /etc/rsyslog.d/all.conf"
     webdmz2.vm.provision "file", source: "web_dmz/files/nginx-exporter.service", destination: "/etc/systemd/system/nginx-exporter.service"
     webdmz2.vm.provision "shell", inline: "chmod 777 /etc/systemd/system/nginx-exporter.service"
     webdmz2.vm.provision "file", source: "web_dmz/files/rootCA.key", destination: "/etc/nginx/sites/rootCA.key"
