@@ -128,6 +128,7 @@ Vagrant.configure("2") do |config| #создаём конфигурацию дл
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.conf.txt", destination: "/etc/ansible/files/pg_hba.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/pg_hba.slave.conf", destination: "/etc/ansible/files/pg_hba.slave.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/postgresql.slave.conf", destination: "/etc/ansible/files/postgresql.slave.conf"
+    ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/postgresql.master.conf", destination: "/etc/ansible/files/postgresql.master.conf"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/node_exporter.service.txt", destination: "/etc/ansible/files/node_exporter.service"
     ansibledmz2.vm.provision "file", source: "ansible_dmz/files_for_ansible_dmz/nginx_exporter.service.txt", destination: "/etc/ansible/files/nginx_exporter.service"
     ansibledmz2.vm.provision "shell", inline: "chmod 777 /etc/ansible/files/*"

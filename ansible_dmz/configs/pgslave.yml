@@ -39,6 +39,7 @@
       sudo chmod 777 /var/lib/pgsql/data/*/*/* &&
       sudo chmod 777 /var/lib/pgsql/data/*/*/*/* &&
       sudo sed -i 's/10.200.1.4/10.200.1.6/g' /var/lib/pgsql/data/postgresql.conf &&
+      sudo systemctl enable postgresql.service &&
       sudo systemctl start postgresql.service
     tags: replica_settings
 
